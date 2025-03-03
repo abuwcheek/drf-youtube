@@ -46,6 +46,19 @@ REST_FRAMEWORK = {
     ],
 }
 
+from datetime import timedelta
+
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=150),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,  # Use Django's SECRET_KEY or a dedicated key
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
