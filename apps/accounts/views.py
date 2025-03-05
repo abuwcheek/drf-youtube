@@ -17,16 +17,16 @@ class CustomRegisterUserView(APIView):
           try:
                email = request.user.email
                username = request.user.username
-               if username:
+               if CustomUser.objects.filter(username=username).exists():
                     data = {
                          'status': False,
                          'message': "Bu username orqali siz allaqachon ro'yxatdan o'tgansiz"
                     }
                     return Response(data=data)
-               elif email:
+               if CustomUser.objects.filter(email=email).exists():
                     data = {
                          'status': False,
-                         'message': "Bu email allaqachon ro'yxatdan o'tgan"
+                         'message': "Bu email orqali siz allaqachon ro'yxatdan o'tgansiz"
                     }
                     return Response(data=data)
           except Exception as e:

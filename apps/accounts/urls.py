@@ -24,3 +24,5 @@ urlpatterns += [
      path('retrieve-user', CustomRetrieveUserView.as_view(), name='retrieve'),
      path('delete-user', CustomDeleteUserView.as_view(), name='delete'),
 ]
+
+

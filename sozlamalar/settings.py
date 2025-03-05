@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'apps.accounts',
     'apps.base',
     'apps.content',
+    'apps.chanel',
     
 ]
 

@@ -15,7 +15,7 @@ class CustomUser(AbstractUser):
      birth_date = models.DateField(null=True, blank=True)
      email = models.EmailField(unique=True)
      phono_numara = models.CharField(max_length=15, null=True, blank=True)
-     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default='JINS', null=True, blank=True)
+     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default='JINS')
 
 
      def __str__(self):

@@ -11,6 +11,12 @@ class CustomRegisterUserSerializer(serializers.ModelSerializer):
           extra_kwargs = {'password': {'write_only': True}}
 
 
+     def validate_email(self, value):
+          if CustomUser.objects.filter(email=value).exists():
+               raise serializers.ValidationError("Bu email allaqachon ro'yxatdan o'tgan")
+          return value
+     
+
      def create(self, validated_data):
           user = CustomUser.objects.create_user(**validated_data)
           return user
