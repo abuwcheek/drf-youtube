@@ -43,12 +43,19 @@ class GetChanelDataAPIView(APIView):
 
      def get(self, request):
           chanel = get_object_or_404(Chanel, user=request.user)
-          serializer = ChanelSerializer(instance=chanel, context={'request': request})
-          data = {
-               'status': True,
-               'data': serializer.data
-          }
-          return Response(data=data)
+          if chanel:
+               serializer = ChanelSerializer(instance=chanel, context={'request': request})
+               data = {
+                    'status': True,
+                    'data': serializer.data
+               }
+               return Response(data=data)
+          else:
+               data = {
+                    'status': False,
+                    'message': "Sizda kanal mavjud emas"
+               }
+               return Response(data=data)
 
 
 
@@ -70,3 +77,6 @@ class DeleteChanelAPIView(APIView):
                     'message': "Bu kanal sizga tegishli emas"
                }
                return Response(data=data)
+
+
+

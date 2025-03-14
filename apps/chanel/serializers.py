@@ -6,13 +6,13 @@ from .models import Chanel
 
 class ChanelSerializer(serializers.ModelSerializer):
 
-     subscriber_counts = serializers.SerializerMethodField()
+     subscribers_count = serializers.SerializerMethodField()
      class Meta:
           model = Chanel
-          fields = ['id', 'user', 'name', 'icon', 'banner', 'description', 'subscriber_counts']
+          fields = ['id', 'user', 'name', 'icon', 'banner', 'description', 'subscribers_count']
 
 
-     def get_subscriber_counts(self, obj):
+     def get_subscribers_count(self, obj):
           return obj.subscribers.all().count()
 
 
@@ -27,3 +27,24 @@ class ChanelSerializer(serializers.ModelSerializer):
                return value
 
           return value
+
+
+
+class GetChanelDataSerializers(serializers.ModelSerializer):
+     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+     is_followed = serializers.SerializerMethodField()
+     followers_count = serializers.SerializerMethodField()
+
+     class Meta:
+          model = Chanel
+          fields = ['id', 'user', 'name', 'icon', 'is_followed', 'followers_count']
+
+
+     def get_is_followed(self, obj):
+          user = self.context.get('request').user
+          return user in obj.subscribers.all()
+
+
+     @staticmethod
+     def get_followers_count(obj):
+          return obj.subscribers.all().count()
