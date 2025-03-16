@@ -38,3 +38,10 @@ class ContentSerializers(serializers.ModelSerializer):
           }
 
           return data
+
+
+
+class UpdateContentSerializers(serializers.ModelSerializer):
+     class Meta:
+          model = Content
+          fields = ['title', 'description', 'photo']
