@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Q
 from rest_framework.views import APIView
-from rest_framework.generics import CreateAPIView, UpdateAPIView, DestroyAPIView
+from rest_framework.generics import CreateAPIView, UpdateAPIView, DestroyAPIView, RetrieveAPIView, ListAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -65,3 +65,26 @@ class DeleteContentAPIView(DestroyAPIView):
           }
 
           return Response(data=data)
+
+
+
+class RetrieveContentAPIView(RetrieveAPIView):
+     permission_classes = [IsAuthenticated]
+     serializer_class = ContentSerializers
+     queryset = Content.objects.all()
+
+     def retrieve(self, request, *args, **kwargs):
+          if request.user.is_authenticated:
+               content = self.get_object()
+               user = request.user
+               view = View.objects.get_or_create(user=user, content=content)
+
+          return super().retrieve(request, *args, **kwargs)
+
+
+
+class ListContentAPIView(ListAPIView):
+     permission_classes = [AllowAny]
+     serializer_class = ContentSerializers
+     queryset = Content.objects.filter(is_active=True)
+     pagination_class = MyPageNumberPagination
