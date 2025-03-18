@@ -1,12 +1,14 @@
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Q
 from rest_framework.views import APIView
-from rest_framework.generics import CreateAPIView, UpdateAPIView, DestroyAPIView, RetrieveAPIView, ListAPIView
+from rest_framework.generics import (CreateAPIView, UpdateAPIView,
+                                      DestroyAPIView, RetrieveAPIView, 
+                                      ListAPIView)
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import  Category, Content, View, Like, Comment
-from .serializers import ContentSerializers, UpdateContentSerializers
+from .serializers import ContentSerializers, UpdateContentSerializers, CommentToContenSerializers
 from .paginations import MyPageNumberPagination
 from .permissions import IsHasChanel
 from apps.chanel.models import Chanel
@@ -88,3 +90,49 @@ class ListContentAPIView(ListAPIView):
      serializer_class = ContentSerializers
      queryset = Content.objects.filter(is_active=True)
      pagination_class = MyPageNumberPagination
+
+
+
+class LikeToContentAPIView(APIView):
+     permission_classes = [IsAuthenticated]
+
+     def post(self, request):
+          video_id = request.data.get("video")
+
+          video = get_object_or_404(Content, id=video_id)
+          like = Like.objects.filter(video_id=video.id, user=request.user).first()
+          dislike = request.data.get('dislike') == 'true'
+          if like:
+               if like.dislike == dislike:
+                    like.delete()
+                    data = {
+                         'status': True,
+                         'message': "like o'chirildi"
+                    }
+               else:
+                    like.dislike = dislike
+                    like.save()
+                    data = {
+                         'status': True,
+                         'message': "like o'zgartirildi"
+                    }
+          else:
+               Like.objects.create(video_id=video.id, user=request.user, dislike=dislike)
+               data = { 
+                    'status': True,
+                    "message": "like bosildi"
+               }
+     
+          return Response(data=data)
+     
+
+
+class CommetToContentAPIView(CreateAPIView):
+     permission_classes = [IsAuthenticated]
+     serializer_class = CommentToContenSerializers
+     queryset = Comment.objects.all()
+
+     def get_serializer_context(self):
+          context = super().get_serializer_context()
+          context['user'] = self.request.user
+          return context 

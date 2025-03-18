@@ -40,12 +40,12 @@ class View(BaseModel):
 
 class Like(BaseModel):
      user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='user_likes')
-     like = models.ForeignKey(Content, on_delete=models.CASCADE, related_name='content_likes')
+     video = models.ForeignKey(Content, on_delete=models.CASCADE, related_name='content_likes')
      dislike = models.BooleanField(default=False)
 
 
      def __str__(self):
-          return f"{self.user.username} - {self.content.title}"
+          return f"{self.user.username} - {self.video.title}"
 
 
 

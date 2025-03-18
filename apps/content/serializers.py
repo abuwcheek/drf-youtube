@@ -45,3 +45,24 @@ class UpdateContentSerializers(serializers.ModelSerializer):
      class Meta:
           model = Content
           fields = ['title', 'description', 'photo']
+
+
+
+class CommentToContenSerializers(serializers.ModelSerializer):
+     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+     class Meta:
+          model = Comment
+          fields = ['id', 'user', 'content', 'comment']
+
+     
+     def create(self, validated_data):
+          user = self.context.get('user')
+          validated_data['user'] = user
+          return super().create(validated_data)
+     
+     def to_representation(self, instance):
+          data = super().to_representation(instance)
+          data['user'] = instance.user.username
+
+          return data

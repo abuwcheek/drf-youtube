@@ -1,7 +1,8 @@
 from django.urls import path
 from .views import (CreateContentAPIView, UpdateContentAPIView, 
                     DeleteContentAPIView, RetrieveContentAPIView, 
-                    ListContentAPIView)
+                    ListContentAPIView, LikeToContentAPIView,
+                    CommetToContentAPIView)
 
 
 
@@ -12,4 +13,6 @@ urlpatterns = [
      path('delete-content/<int:pk>', DeleteContentAPIView.as_view()),
      path('retrieve-content/<int:pk>', RetrieveContentAPIView.as_view()),
      path('list-content', ListContentAPIView.as_view()),
+     path('like-to-content', LikeToContentAPIView.as_view()),
+     path('comment-to-content', CommetToContentAPIView.as_view()),
 ]
