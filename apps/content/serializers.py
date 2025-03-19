@@ -66,3 +66,18 @@ class CommentToContenSerializers(serializers.ModelSerializer):
           data['user'] = instance.user.username
 
           return data
+
+
+
+class UpdateCommentToContentSerializers(serializers.ModelSerializer):
+     class Meta:
+          model = Comment
+          fields = ['comment']
+
+     def update(self, instance, validated_data):
+          instance.comment = validated_data.get('comment', instance.comment)
+          instance.save()
+          return instance
+
+
+

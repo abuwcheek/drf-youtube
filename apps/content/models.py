@@ -58,3 +58,31 @@ class Comment(BaseModel):
      def __str__(self):
           return f"{self.user.username} - {self.content.title}"
 
+
+
+class CommentLike(BaseModel):
+     user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, related_name='user_comment_likes', null=True, blank=True)
+     comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='comment_likes')
+     dislike = models.BooleanField(default=False)
+
+
+     def __str__(self):
+          return f'{self.user.username} - {self.comment.comment}'
+
+
+
+class CommentReply(BaseModel):
+     user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, related_name='comment_replys', null=True, blank=True)
+     comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='comment_replys')
+     reply = models.TextField()
+
+
+     def __str__(self):
+          return f'{self.user.username} - {self.comment.comment}'
+     
+
+
+class PlayList(BaseModel):
+     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='user_playlist')
+     title = models.CharField(max_length=200)
+     videos = models.ManyToManyField(Content, related_name='videos_playlists', blank=True)

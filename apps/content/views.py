@@ -8,9 +8,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import  Category, Content, View, Like, Comment
-from .serializers import ContentSerializers, UpdateContentSerializers, CommentToContenSerializers
+from .serializers import (ContentSerializers, UpdateContentSerializers, 
+                          CommentToContenSerializers, UpdateCommentToContentSerializers)
 from .paginations import MyPageNumberPagination
-from .permissions import IsHasChanel
+from .permissions import IsHasChanel, IsOwner, IsAuthor
 from apps.chanel.models import Chanel
 from apps.chanel.serializers import GetChanelDataSerializers
 
@@ -30,7 +31,7 @@ class CreateContentAPIView(APIView):
 
           data = {
                'status': True,
-               'message': "Video qo'shdingiz",
+               'message': "video qo'shdingiz",
                'data': self.serializer_class(instance=content, context={'request': request}).data
           }
 
@@ -39,7 +40,7 @@ class CreateContentAPIView(APIView):
 
 
 class UpdateContentAPIView(UpdateAPIView):
-     permission_classes = [IsAuthenticated, IsHasChanel]
+     permission_classes = [IsAuthenticated, IsOwner]
      serializer_class = UpdateContentSerializers
      queryset = Content.objects.filter(is_active=True)
 
@@ -47,14 +48,14 @@ class UpdateContentAPIView(UpdateAPIView):
           super().update(request, *args, **kwargs)
           data = {
                'status': True,
-               'message': 'Videoni o`zgartirdingiz'
+               'message': 'videoni o`zgartirdingiz'
           }
           return Response(data=data)
 
 
 
 class DeleteContentAPIView(DestroyAPIView):
-     permission_classes = [IsAuthenticated, IsHasChanel]
+     permission_classes = [IsAuthenticated, IsOwner]
      serializer_class = UpdateContentSerializers
      queryset = Content.objects.filter(is_active=True)
 
@@ -63,7 +64,7 @@ class DeleteContentAPIView(DestroyAPIView):
 
           data = {
                'status': True,
-               'message': "Videoni o'chirib tashladingiz"
+               'message': "videoni o'chirib tashladingiz"
           }
 
           return Response(data=data)
@@ -136,3 +137,60 @@ class CommetToContentAPIView(CreateAPIView):
           context = super().get_serializer_context()
           context['user'] = self.request.user
           return context 
+
+
+
+class UpdateCommentToContentAPIView(UpdateAPIView):
+     permission_classes = [IsAuthenticated, IsAuthor]
+     serializer_class = UpdateCommentToContentSerializers
+     queryset = Comment.objects.filter(is_active=True)
+
+
+     def update(self, request, *args, **kwargs):
+          instance = self.get_object()
+          if instance.user != request.user:
+               data = {
+                    'status': False,
+                    'message': "bu comment sizga tegishli emas"
+               }
+               return Response(data=data)
+          
+          super().update(request, *args, **kwargs)
+          data = {
+               'status': True,
+               'message': "comment o'zgartirildi"
+          }
+          return Response(data=data)
+
+
+
+class DeleteCommentToContentAPIView(DestroyAPIView):
+     permission_classes = [IsAuthenticated, IsAuthor]
+     serializer_class = CommentToContenSerializers
+     queryset = Comment.objects.filter(is_active=True)
+
+
+     def destroy(self, request, *args, **kwargs):
+          instance = self.get_object()
+          if instance.user != request.user:
+               data = {
+                    'status': False,
+                    'message': "bu comment sizga tegishli emas"
+               }
+               return Response(data=data)
+
+          super().destroy(request, *args, **kwargs)
+          data = {
+               'status': True,
+               'message': "comment o'chirildi"
+          }
+          return Response(data=data)
+
+
+
+class LikeToCommentToContentAPIView(APIView):
+     permission_classes = [IsAuthenticated]
+
+     def post(self, request):
+          comment = get_object_or_404(Comment, id=request.data['comment'])
+          
