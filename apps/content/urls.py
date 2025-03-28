@@ -3,7 +3,9 @@ from .views import (CreateContentAPIView, UpdateContentAPIView,
                     DeleteContentAPIView, RetrieveContentAPIView, 
                     ListContentAPIView, LikeToContentAPIView,
                     CommetToContentAPIView, UpdateCommentToContentAPIView,
-                    DeleteCommentToContentAPIView)
+                    DeleteCommentToContentAPIView, LikeCommentToContentAPIView,
+                    CommentReplyToContentAPIView, UpdateCommentReplyToContentAPIView,
+                    DestroyCommentReplyToContentAPIView, CommentListToContentAPIView)
 
 
 
@@ -18,4 +20,9 @@ urlpatterns = [
      path('comment-to-content', CommetToContentAPIView.as_view()),
      path('update-comment-to-content/<int:pk>', UpdateCommentToContentAPIView.as_view()),
      path('delete-comment-to-content/<int:pk>', DeleteCommentToContentAPIView.as_view()),
+     path('lke-comment', LikeCommentToContentAPIView.as_view()),
+     path('comment-reply', CommentReplyToContentAPIView.as_view()),
+     path('update-comment-reply/<int:pk>', UpdateCommentReplyToContentAPIView.as_view()),
+     path('delete-comment-reply/<int:pk>', DestroyCommentReplyToContentAPIView.as_view()),
+     path('content-comments/<int:pk>', CommentListToContentAPIView.as_view()),
 ]

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, Content, View, Like, Comment
+from .models import Category, CommentLike, CommentReply, Content, View, Like, Comment
 from apps.chanel.serializers import GetChanelDataSerializers 
 
 
@@ -81,3 +81,55 @@ class UpdateCommentToContentSerializers(serializers.ModelSerializer):
 
 
 
+class CommentReplyToContentSerializers(serializers.ModelSerializer):
+     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+     class Meta:
+          model = CommentReply
+          fields = ['id', 'user', 'comment', 'reply']
+
+     def to_representation(self, instance):
+          data = super().to_representation(instance)
+          data['user'] = instance.user.username
+          return data
+
+
+
+class UpdateCommentReplyToContentSerializers(serializers.ModelSerializer):
+     class Meta:
+          model = CommentReply
+          fields = ['reply']
+
+     def update(self, instance, validated_data):
+          instance.reply = validated_data.get('reply', instance.reply)
+          instance.save()
+          return instance
+
+
+
+class CommentListToContentSerializers(serializers.ModelSerializer):
+     likes_count = serializers.SerializerMethodField()
+     comment_replys = serializers.SerializerMethodField()
+     class Meta:
+          model = Comment
+          fields = ['id', 'comment', 'user', 'likes_count', ]
+     
+
+     def get_likes_count(self, obj):
+          user = self.context.get('request').user
+          like = CommentLike.objects.filter(user=user, comment=obj, dislike=False)
+          dislike = CommentLike.objects.filter(user=user, comment=obj, dislike=True)
+          is_liked = like.exists()
+          is_disliked = dislike.exists()
+
+          data = {
+               'is_liked': is_liked,
+               'is_disliked': is_disliked,
+               'comment_likes': obj.commen_likes.filter(dislike=False),
+               'comment_dislikes': obj.commen_likes.filter(dislike=True),
+          }
+
+          return data
+     
+     def get_comment_replys(self, obj):
+          comments = obj.comment_replys.all()
+          return CommentReplyToContentSerializers(instance=comments, many=True).data

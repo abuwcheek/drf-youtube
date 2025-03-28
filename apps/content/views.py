@@ -7,9 +7,11 @@ from rest_framework.generics import (CreateAPIView, UpdateAPIView,
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import  Category, Content, View, Like, Comment
-from .serializers import (ContentSerializers, UpdateContentSerializers, 
-                          CommentToContenSerializers, UpdateCommentToContentSerializers)
+from .models import  Category, CommentLike, CommentReply, Content, View, Like, Comment
+from .serializers import (ContentSerializers, UpdateCommentReplyToContentSerializers, 
+                          UpdateContentSerializers, 
+                          CommentToContenSerializers, UpdateCommentToContentSerializers, 
+                          CommentReplyToContentSerializers, CommentListToContentSerializers)
 from .paginations import MyPageNumberPagination
 from .permissions import IsHasChanel, IsOwner, IsAuthor
 from apps.chanel.models import Chanel
@@ -188,9 +190,83 @@ class DeleteCommentToContentAPIView(DestroyAPIView):
 
 
 
-class LikeToCommentToContentAPIView(APIView):
+class LikeCommentToContentAPIView(APIView):
      permission_classes = [IsAuthenticated]
 
      def post(self, request):
           comment = get_object_or_404(Comment, id=request.data['comment'])
+          like = CommentLike.objects.filter(comment=comment, user=request.user).first()
+          dislike = request.data.get('dislike') == 'true'
+          if like:
+               if like.dislike == dislike:
+                    like.delete()
+                    data = {
+                         'status': True,
+                         'message': "like o'chirildi"
+                    }
+               else:
+                    like.dislike = dislike
+                    like.save()
+                    data = {
+                         'status': True,
+                         'message': "like o'zgartirildi"
+                    }
+          else:
+               CommentLike.objects.create(comment=comment, user=request.user, dislike=dislike)
+               data = {
+                    'status': True,
+                    'message': "like bosildi"
+               }
           
+          return Response(data=data)
+
+
+
+class CommentReplyToContentAPIView(CreateAPIView):
+     permission_classes = [IsAuthenticated]
+     serializer_class = CommentReplyToContentSerializers
+     queryset = CommentReply.objects.all()
+
+
+
+class UpdateCommentReplyToContentAPIView(UpdateAPIView):
+     permission_classes = [IsAuthenticated]
+     serializer_class = UpdateCommentReplyToContentSerializers
+     queryset = CommentReply.objects.filter(is_active=True)
+
+     def update(self, request, *args, **kwargs):
+          super().update(request, *args, **kwargs)
+          data = {
+               'status': True,
+               'message': "comment reply o'zgartirildi"
+          }
+          return Response(data=data)
+
+
+
+class DestroyCommentReplyToContentAPIView(DestroyAPIView):
+     permission_classes = [IsAuthenticated, IsAuthor]
+     serializer_class = UpdateCommentReplyToContentSerializers
+     queryset = CommentReply.objects.filter(is_active=True)
+
+
+     def delete(self, request, *args, **kwargs):
+          super().delete(request, *args, **kwargs)
+          data = {
+               'status': True,
+               'message': "comment replay o'chirib tashlandi"
+          }
+          return Response(data=data)
+
+
+
+class CommentListToContentAPIView(ListAPIView):
+     permission_classes = [AllowAny]
+     serializer_class = CommentListToContentSerializers
+     queryset = Comment.objects.filter(is_avtive=True)
+
+     def get_queryset(self):
+          id = self.kwargs.get('pk')
+          content = get_object_or_404(Comment, id=id)
+          comments = content.content_comments.filter(is_active=True)
+          return comments
