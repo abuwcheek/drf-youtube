@@ -7,11 +7,12 @@ from rest_framework.generics import (CreateAPIView, UpdateAPIView,
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import  Category, CommentLike, CommentReply, Content, View, Like, Comment
-from .serializers import (ContentSerializers, UpdateCommentReplyToContentSerializers, 
-                          UpdateContentSerializers, 
+from .models import  Category, CommentLike, CommentReply, Content, PlayList, View, Like, Comment
+from .serializers import (ContentSerializers, CreatePlayListSerializers, 
+                          UpdateCommentReplyToContentSerializers,UpdateContentSerializers, 
                           CommentToContenSerializers, UpdateCommentToContentSerializers, 
-                          CommentReplyToContentSerializers, CommentListToContentSerializers)
+                          CommentReplyToContentSerializers, CommentListToContentSerializers, 
+                          RetrievePlayListSerializers,)
 from .paginations import MyPageNumberPagination
 from .permissions import IsHasChanel, IsOwner, IsAuthor
 from apps.chanel.models import Chanel
@@ -263,10 +264,93 @@ class DestroyCommentReplyToContentAPIView(DestroyAPIView):
 class CommentListToContentAPIView(ListAPIView):
      permission_classes = [AllowAny]
      serializer_class = CommentListToContentSerializers
-     queryset = Comment.objects.filter(is_avtive=True)
+     queryset = Comment.objects.filter(is_active=True)
 
      def get_queryset(self):
           id = self.kwargs.get('pk')
           content = get_object_or_404(Comment, id=id)
           comments = content.content_comments.filter(is_active=True)
           return comments
+
+
+
+class CreatePlayListAPIView(CreateAPIView):
+     permission_classes = [IsAuthenticated]
+     serializer_class = CreatePlayListSerializers
+     queryset = PlayList.objects.all()
+
+     def create(self, request, *args, **kwargs):
+          solo = super().create(request, *args, **kwargs)
+          data = {
+               'status': True,
+               'message': "playlist yaratildi",
+               'data': solo.data
+          }
+          return Response(data=data)
+
+
+
+class AddContentToPlayListAPIView(APIView):
+     permission_classes = [IsAuthenticated, IsAuthor]
+
+     def post(self, request, pk):
+          content = get_object_or_404(Content, id=request.data['content'])
+          playlist = get_object_or_404(PlayList, id=pk)
+
+          if request.user == playlist.user:
+               playlist.videos.add(content)
+               data = {
+                    'status': True,
+                    'message': "video playlistga qo'shildi"
+               }
+          else:
+               data  = {
+                    'status': False,
+                    'message': "playlist sizga tegishli emas"
+               }
+
+          return Response(data=data)
+
+
+class PlayListListAPIView(ListAPIView):
+     permission_classes = [IsAuthenticated]
+     serializer_class = CreatePlayListSerializers
+     queryset = PlayList.objects.filter(is_active=True) 
+
+
+
+class PlayListRetrieveAPIView(RetrieveAPIView):
+     permission_classes = [IsAuthenticated]
+     serializer_class = RetrievePlayListSerializers
+
+
+     def get_queryset(self):
+          user = self.request.user
+          return PlayList.objects.filter(user=user)
+     
+     
+     def get_serializer_context(self):
+          context = super().get_serializer_context()
+          context["request"] = self.request  # request obyektini serializerga uzatish
+          return context
+
+class DeleteContentToPlayListAPIView(APIView):
+     permission_classes = [IsAuthenticated]
+
+     def post(self, request, pk):
+          content = get_object_or_404(Content, id=request.data['content'])
+          playlist = get_object_or_404(PlayList, id=pk)
+
+          if request.user == playlist.user:
+               playlist.videos.remove(content)
+               data = {
+                    'status': True,
+                    'message': "video playlistdan o'chirildi"
+               }
+          else:
+               data = {
+                    'status': False,
+                    'message': "afsuski siz playlist muallifi emassiz"
+               }
+
+          return Response(data=data)

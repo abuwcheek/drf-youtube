@@ -41,8 +41,12 @@ class GetChanelDataSerializers(serializers.ModelSerializer):
 
 
      def get_is_followed(self, obj):
-          user = self.context.get('request').user
-          return user in obj.subscribers.all()
+          request = self.context.get("request", None)  # request mavjudligini tekshiramiz
+          if request is None or not hasattr(request, "user"):
+               return False  # request yo‘q bo‘lsa, False qaytarish
+          return request.user.is_authenticated and request.user in obj.subscribers.all()
+
+
 
 
      @staticmethod

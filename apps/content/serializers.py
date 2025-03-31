@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, CommentLike, CommentReply, Content, View, Like, Comment
+from .models import Category, CommentLike, CommentReply, Content, PlayList, View, Like, Comment
 from apps.chanel.serializers import GetChanelDataSerializers 
 
 
@@ -133,3 +133,30 @@ class CommentListToContentSerializers(serializers.ModelSerializer):
      def get_comment_replys(self, obj):
           comments = obj.comment_replys.all()
           return CommentReplyToContentSerializers(instance=comments, many=True).data
+
+
+
+class CreatePlayListSerializers(serializers.ModelSerializer):
+     videos_count = serializers.SerializerMethodField()
+     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+     class Meta:
+          model = PlayList
+          fields = ['id', 'user', 'title', 'videos_count']
+
+     
+     def get_videos_count(self, obj):
+          return obj.videos.count()
+
+
+
+class RetrievePlayListSerializers(serializers.ModelSerializer):
+     videos = serializers.SerializerMethodField()
+     class Meta:
+          model = PlayList
+          fields = ['id', 'title', 'videos',  'user']
+
+
+     @staticmethod
+     def get_videos(obj):
+          vds = obj.videos
+          return ContentSerializers(instance=vds, many=True).data
