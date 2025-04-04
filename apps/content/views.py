@@ -291,25 +291,34 @@ class CreatePlayListAPIView(CreateAPIView):
 
 
 class AddContentToPlayListAPIView(APIView):
-     permission_classes = [IsAuthenticated, IsAuthor]
+     permission_classes = [IsAuthenticated, IsAuthor]  # Foydalanuvchi va muallifga ruxsat
 
      def post(self, request, pk):
           content = get_object_or_404(Content, id=request.data['content'])
           playlist = get_object_or_404(PlayList, id=pk)
 
           if request.user == playlist.user:
-               playlist.videos.add(content)
-               data = {
+               if content in playlist.videos.all():
+                    playlist.videos.remove(content)  
+                    data = {
+                    'status': False,
+                    'message': "video playlistdan o'chirildi"
+                    }
+                    return Response(data=data)
+               else:
+                    playlist.videos.add(content) 
+                    data = {
                     'status': True,
                     'message': "video playlistga qo'shildi"
-               }
+                    }
+               return Response(data=data)
           else:
-               data  = {
+               data = {
                     'status': False,
-                    'message': "playlist sizga tegishli emas"
+                    'message': "afsuski siz playlist muallifi emassiz"
                }
+               return Response(data=data)
 
-          return Response(data=data)
 
 
 class PlayListListAPIView(ListAPIView):
@@ -327,12 +336,9 @@ class PlayListRetrieveAPIView(RetrieveAPIView):
      def get_queryset(self):
           user = self.request.user
           return PlayList.objects.filter(user=user)
-     
-     
-     def get_serializer_context(self):
-          context = super().get_serializer_context()
-          context["request"] = self.request  # request obyektini serializerga uzatish
-          return context
+
+
+
 
 class DeleteContentToPlayListAPIView(APIView):
      permission_classes = [IsAuthenticated]
@@ -353,4 +359,28 @@ class DeleteContentToPlayListAPIView(APIView):
                     'message': "afsuski siz playlist muallifi emassiz"
                }
 
+          return Response(data=data)
+
+
+
+class DeletePlayListAPIView(DestroyAPIView):
+     permission_classes = [IsAuthenticated]
+     serializer_class = CreatePlayListSerializers
+     queryset = PlayList.objects.filter(is_active=True)
+
+     def destroy(self, request, *args, **kwargs):
+          user = self.request.user
+          playlist = get_object_or_404(PlayList, id=kwargs['pk'], user=user)
+          if playlist.user != request.user:
+               data = {
+                    'status': False,
+                    'message': "afsuski siz playlist muallifi emassiz"
+               }
+               return Response(data=data)
+          
+          super().destroy(request, *args, **kwargs)
+          data = {
+               'status': True,
+               'message': "playlist o'chirildi"
+          }
           return Response(data=data)

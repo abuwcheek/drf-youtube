@@ -24,19 +24,26 @@ class ContentSerializers(serializers.ModelSerializer):
 
 
      def get_likes_count(self, obj):
-          user = self.context.get('request').user.id
-          like = Like.objects.filter(user=user, dislike=False)
-          dislike = Like.objects.filter(user=user, dislike=True)
-          is_liked = like.exists()
-          is_disliked = dislike.exists()
-
+          user = self.context.get('request').user
+          if user.is_authenticated:
+               like = Like.objects.filter(user=user, dislike=False)
+               dislike = Like.objects.filter(user=user, dislike=True)
+               is_liked = like.exists()
+               is_disliked = dislike.exists()
+               data = {
+                    'is_liked': is_liked,
+                    'is_disliked': is_disliked,
+                    'likes': obj.likes.filter(dislike=False).count(),
+                    'dislikes': obj.likes.filter(dislike=True).count(),
+               }
+               return data
+          
           data = {
-               'is_liked': is_liked,
-               'is_disliked': is_disliked,
-               'likes': obj.content_likes.filter(dislike=False).count(),
-               'dislikes': obj.content_likes.filter(dislike=True).count()
+               is_liked: False,
+               is_disliked: False,
+               'likes': 0,
+               'dislikes': 0,
           }
-
           return data
 
 
@@ -151,6 +158,7 @@ class CreatePlayListSerializers(serializers.ModelSerializer):
 
 class RetrievePlayListSerializers(serializers.ModelSerializer):
      videos = serializers.SerializerMethodField()
+     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
      class Meta:
           model = PlayList
           fields = ['id', 'title', 'videos',  'user']

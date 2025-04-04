@@ -8,7 +8,7 @@ from .views import (CreateContentAPIView, UpdateContentAPIView,
                     DestroyCommentReplyToContentAPIView, CommentListToContentAPIView,
                     CreatePlayListAPIView,AddContentToPlayListAPIView,
                     DeleteContentToPlayListAPIView,PlayListListAPIView,
-                    PlayListRetrieveAPIView,)
+                    PlayListRetrieveAPIView, DeletePlayListAPIView,)
 
 
 
@@ -33,4 +33,5 @@ urlpatterns = [
      path('delete-content-to-playlist/<int:pk>', DeleteContentToPlayListAPIView.as_view()),
      path('list-playlist', PlayListListAPIView.as_view()),
      path('retrieve-playlist/<int:pk>', PlayListRetrieveAPIView.as_view()),
+     path('delete-playlist/<int:pk>', DeletePlayListAPIView.as_view()),
 ]
