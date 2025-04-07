@@ -168,3 +168,53 @@ class RetrievePlayListSerializers(serializers.ModelSerializer):
      def get_videos(obj):
           vds = obj.videos
           return ContentSerializers(instance=vds, many=True).data
+
+
+
+class ContentCommentListSerializers(serializers.ModelSerializer):
+     likes_count = serializers.SerializerMethodField()
+     comment_replies = serializers.SerializerMethodField()
+     class Meta:
+          model = Comment
+          fields = ['id', 'comment', 'user', 'likes_count', 'comment_replies']
+
+     def get_likes_count(self, obj):
+          user = self.context.get('request').user
+          like = CommentLike.objects.filter(user=user, comment=obj, dislike=False)
+          dislike = CommentLike.objects.filter(user=user, comment=obj, dislike=True)
+          is_liked = like.exists()
+          is_disliked = dislike.exists()
+          data = {
+               'is_liked': is_liked,
+               'is_disliked': is_disliked,
+               'likes': obj.comment_likes.filter(dislike=False).count(),
+               'dislikes': obj.comment_likes.filter(dislike=True).count(),
+          }
+          return data
+
+
+     def get_comment_replies(self, obj):
+          comments = obj.comment_replies.all()
+          return CommentReplyToContentSerializers(instance=comments, many=True).data
+
+
+
+
+class CategorySerializers(serializers.ModelSerializer):
+     class Meta:
+          model = Category
+          fields = ['id', 'title']
+
+
+
+class CategoryRetrieveSerializers(serializers.ModelSerializer):
+     contents = serializers.SerializerMethodField()
+     class Meta:
+          model = Category
+          fields = ['id', 'title', 'contents']
+
+
+     @staticmethod
+     def get_contents(obj):
+          contents = obj.category_videos.all().filter(is_active=True).order_by('-created_at')
+          return ContentSerializers(instance=contents, many=True).data

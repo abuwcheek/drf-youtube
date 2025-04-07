@@ -1,18 +1,20 @@
+from itertools import count
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Q
+from django.db.models import Count
 from rest_framework.views import APIView
 from rest_framework.generics import (CreateAPIView, UpdateAPIView,
-                                      DestroyAPIView, RetrieveAPIView, 
-                                      ListAPIView)
+                                   DestroyAPIView, RetrieveAPIView, 
+                                   ListAPIView)
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from .models import  Category, CommentLike, CommentReply, Content, PlayList, View, Like, Comment
-from .serializers import (ContentSerializers, CreatePlayListSerializers, 
-                          UpdateCommentReplyToContentSerializers,UpdateContentSerializers, 
-                          CommentToContenSerializers, UpdateCommentToContentSerializers, 
-                          CommentReplyToContentSerializers, CommentListToContentSerializers, 
-                          RetrievePlayListSerializers,)
+from .serializers import ( CategoryRetrieveSerializers, ContentCommentListSerializers, ContentSerializers, CreatePlayListSerializers, 
+                         UpdateCommentReplyToContentSerializers,UpdateContentSerializers, 
+                         CommentToContenSerializers, UpdateCommentToContentSerializers, 
+                         CommentReplyToContentSerializers, CommentListToContentSerializers, 
+                         RetrievePlayListSerializers, CategorySerializers,)
 from .paginations import MyPageNumberPagination
 from .permissions import IsHasChanel, IsOwner, IsAuthor
 from apps.chanel.models import Chanel
@@ -384,3 +386,122 @@ class DeletePlayListAPIView(DestroyAPIView):
                'message': "playlist o'chirildi"
           }
           return Response(data=data)
+
+
+
+class ContentCommentListAPIView(ListAPIView):
+     permission_classes = [AllowAny]
+     serializer_class = ContentCommentListSerializers
+     queryset = Comment.objects.filter(is_active=True)
+
+     def get_queryset(self):
+          content_id = self.kwargs.get('pk')
+          return Comment.objects.filter(content_id=content_id, is_active=True).order_by('-created_at')
+
+
+
+class CategoryCreateAPIView(CreateAPIView):
+     permission_classes = [IsAdminUser]
+     serializer_class = CategorySerializers
+     queryset = Category.objects.all()
+
+     def create(self, request, *args, **kwargs):
+          category_name = request.data.get('title')
+          if Category.objects.filter(title=category_name).exists():
+               data = {
+                    'status': False,
+                    'message': "bunday kategoriya mavjud"
+               }
+               return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
+
+          serializer = self.get_serializer(data=request.data)
+          serializer.is_valid(raise_exception=True)
+          serializer.save()
+          data = {
+               'status': True,
+               'message': "kategoriya yaratildi",
+               'data': serializer.data,
+          }     
+          return Response(data=data, status=status.HTTP_201_CREATED)
+
+
+
+class CategoryUpdateAPIView(UpdateAPIView):
+     permission_classes = [IsAdminUser]
+     serializer_class = CategorySerializers
+     queryset = Category.objects.filter(is_active=True)
+
+     def update(self, request, *args, **kwargs):
+          data = super().update(request, *args, **kwargs)
+          data = {
+               'status': True,
+               'message': "kategoriya o'zgartirildi",
+               'data': data.data
+          }
+          return Response(data=data)
+
+
+
+class DestroyCategoryAPIView(DestroyAPIView):
+     permission_classes = [IsAdminUser]
+     serializer_class = CategorySerializers
+     queryset = Category.objects.filter(is_active=True)
+
+     def destroy(self, request, *args, **kwargs):
+          super().destroy(request, *args, **kwargs)
+          data = {
+               'status': True,
+               'message': "kategoriya o'chirildi"
+          }
+          return Response(data=data)
+
+
+
+class CategoryListAPIView(ListAPIView):
+     permission_classes = [AllowAny]
+     serializer_class = CategorySerializers
+     queryset = Category.objects.filter(is_active=True)
+
+
+
+class CategoryRetrieveAPIView(RetrieveAPIView):
+     permission_classes = [AllowAny]
+     serializer_class = CategoryRetrieveSerializers
+     queryset = Category.objects.filter(is_active=True)
+     pagination_class = MyPageNumberPagination
+
+
+
+class SearchVideosAPIView(ListAPIView):
+     permission_classes = [AllowAny]
+     serializer_class = ContentSerializers
+
+     def get_queryset(self):
+          search = self.kwargs.get('search')
+          return Content.objects.filter(Q(title__icontains=search) | Q(description__icontains=search) | Q(category__title__icontains=search) | Q(is_active=True))
+
+
+
+class OrderByTimeAPIView(ListAPIView):
+     permission_classes = [AllowAny]
+     serializer_class = ContentSerializers
+     queryset = Content.objects.filter(is_active=True).order_by('-created_at')
+
+
+
+class OrderByViewsAPIView(ListAPIView):
+     permission_classes = [AllowAny]
+     serializer_class = ContentSerializers
+     queryset = Content.objects.filter(is_active=True).order_by('-views__count')
+
+
+
+
+class OrderByLikeAPIView(ListAPIView):
+     permission_classes = [AllowAny]
+     serializer_class = Content
+
+     def get_queryset(self):
+          return Content.objects.annotate(
+               likes_count=Count('likes', filter=Q(likes__dislike=False))  # Faqat like larni hisoblash
+          ).order_by('-likes_count')

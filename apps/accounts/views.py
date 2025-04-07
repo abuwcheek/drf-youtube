@@ -1,13 +1,14 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from .serializers import CustomRegisterUserSerializer, CustomUpdateUserSerializer, CustomRetrieveUserSerializer
 from .models import CustomUser
-
+from apps.chanel.serializers import GetChanelDataSerializers
+from apps.chanel.models import Chanel
 
 
 class CustomRegisterUserView(APIView):
@@ -97,3 +98,24 @@ class CustomDeleteUserView(APIView):
                'message': "Muvaffaqiyatli o'chirdingiz"
           }
           return Response(data=data)
+
+
+
+class FollowChanelsListView(ListAPIView):
+     permission_classes = [IsAuthenticated]
+     serializers_class = GetChanelDataSerializers
+
+     def get(self, request, *args, **kwargs):
+          user = request.user
+          chanel = user.chanel_subscribed.all()
+          serializer = GetChanelDataSerializers(chanel, many=True)
+          data = {
+               'status': True,
+               'data': serializer.data
+          }
+          return Response(data=data)
+     
+     def get_serializer_context(self):
+          context = super().get_serializer_context()
+          context['request'] = self.request  # bu MUHIM!
+          return context
