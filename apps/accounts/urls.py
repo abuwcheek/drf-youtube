@@ -15,7 +15,7 @@ urlpatterns = [
 ]
 
 
-from .views import CustomRegisterUserView, CustomUpdateUserView, CustomRetrieveUserView, CustomDeleteUserView, FollowChanelsListView
+from .views import CustomRegisterUserView, CustomUpdateUserView, CustomRetrieveUserView, CustomDeleteUserView, FollowChanelsListView, FollowUnfollowToChanelAPIView
 
 
 urlpatterns += [
@@ -26,5 +26,6 @@ urlpatterns += [
 ]
 
 urlpatterns += [
+     path('follow-chanel', FollowUnfollowToChanelAPIView.as_view()),
      path('followed-chanels-user', FollowChanelsListView.as_view(), name='followed_chanels'),
 ]

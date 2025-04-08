@@ -80,24 +80,3 @@ class DeleteChanelAPIView(APIView):
 
 
 
-class FollowUnfollowToChanelAPIView(APIView):
-     permission_classes = [IsAuthenticated]
-     
-     def post(self, request):
-          user = request.user
-          chanel = get_object_or_404(Chanel, id=request.data['chanel'])
-
-          if user in chanel.subscribers.all():
-               chanel.subscribers.remove(user)
-               data = {
-                    'status': True,
-                    'message': "obuna bekor qilindi"
-               }
-               return Response(data=data)
-          else:
-               chanel.subscribers.add(user)
-               data = {
-                    'status': True,
-                    'message': "obuna bo'ldingiz"
-               }
-               return Response(data=data)

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import ChanelCreateAPIView, GetChanelDataAPIView, DeleteChanelAPIView, FollowUnfollowToChanelAPIView
+from .views import ChanelCreateAPIView, GetChanelDataAPIView, DeleteChanelAPIView
 
 
 
@@ -14,7 +14,3 @@ urlpatterns = [
 
 
 
-
-urlpatterns += [
-     path('follow-chanel', FollowUnfollowToChanelAPIView.as_view()),
-]
