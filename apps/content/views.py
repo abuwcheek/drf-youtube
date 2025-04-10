@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from .models import  Category, CommentLike, CommentReply, Content, PlayList, View, Like, Comment
-from .serializers import ( CategoryRetrieveSerializers, ContentCommentListSerializers, ContentSerializers, CreatePlayListSerializers, 
+from .serializers import ( CategoryListSerializers, CategoryRetrieveSerializers, ContentCommentListSerializers, ContentSerializers, CreatePlayListSerializers, 
                          UpdateCommentReplyToContentSerializers,UpdateContentSerializers, 
                          CommentToContenSerializers, UpdateCommentToContentSerializers, 
                          CommentReplyToContentSerializers, CommentListToContentSerializers, 
@@ -328,6 +328,10 @@ class PlayListListAPIView(ListAPIView):
      serializer_class = CreatePlayListSerializers
      queryset = PlayList.objects.filter(is_active=True) 
 
+     def get_queryset(self):
+          user = self.request.user
+          return PlayList.objects.filter(user=user, is_active=True)
+
 
 
 class PlayListRetrieveAPIView(RetrieveAPIView):
@@ -372,19 +376,22 @@ class DeletePlayListAPIView(DestroyAPIView):
 
      def destroy(self, request, *args, **kwargs):
           user = self.request.user
-          playlist = get_object_or_404(PlayList, id=kwargs['pk'], user=user)
-          if playlist.user != request.user:
+          playlist = get_object_or_404(PlayList, id=kwargs['pk'])
+          if playlist.user == request.user or user.is_staff:
+               self.perform_destroy(playlist)
                data = {
-                    'status': False,
-                    'message': "afsuski siz playlist muallifi emassiz"
+                    'status': True,
+                    'message': "playlist o'chirildi"
                }
                return Response(data=data)
-          
-          super().destroy(request, *args, **kwargs)
+
+
           data = {
-               'status': True,
-               'message': "playlist o'chirildi"
+               'status': False,
+               'message': "afsuski siz playlist muallifi emassiz"
           }
+     
+          
           return Response(data=data)
 
 
@@ -459,7 +466,7 @@ class DestroyCategoryAPIView(DestroyAPIView):
 
 class CategoryListAPIView(ListAPIView):
      permission_classes = [AllowAny]
-     serializer_class = CategorySerializers
+     serializer_class = CategoryListSerializers
      queryset = Category.objects.filter(is_active=True)
 
 

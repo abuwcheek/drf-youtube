@@ -207,6 +207,19 @@ class CategorySerializers(serializers.ModelSerializer):
 
 
 
+class CategoryListSerializers(serializers.ModelSerializer):
+     contents = serializers.SerializerMethodField()
+     class Meta:
+          model = Category
+          fields = ['id', 'title', 'contents']
+
+
+     @staticmethod
+     def get_contents(obj):
+          return obj.category_videos.all().filter(is_active=True).count()
+
+
+
 class CategoryRetrieveSerializers(serializers.ModelSerializer):
      contents = serializers.SerializerMethodField()
      class Meta:
