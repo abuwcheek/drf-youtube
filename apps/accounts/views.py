@@ -141,5 +141,5 @@ class FollowChanelsListView(ListAPIView):
      
      def get_serializer_context(self):
           context = super().get_serializer_context()
-          context['request'] = self.request  # bu MUHIM!
+          context['request'] = self.request
           return context

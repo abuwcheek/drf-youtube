@@ -2,8 +2,9 @@ from django.shortcuts import render, get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView
 from .models import Chanel
-from .serializers import ChanelSerializer
+from .serializers import ChanelSerializer, GetChanelDataSerializers
 
 
 
@@ -23,6 +24,22 @@ class ChanelCreateAPIView(APIView):
           except Exception as ex:
                pass
 
+          name = request.data.get('name')
+          if not name:
+               data = {
+                    'status': False,
+                    'message': "Kanal nomi kiritilmadi"
+               }
+               return Response(data=data)
+          
+          if Chanel.objects.filter(name=name).exists():
+               data = {
+                    'status': False,
+                    'message': "Bu kanal nomi band"
+               }
+               return Response(data=data)
+          
+
           serializer = ChanelSerializer(data=request.data, context={'request': request})
           serializer.is_valid(raise_exception=True)
           chanel = serializer.save()
@@ -38,24 +55,26 @@ class ChanelCreateAPIView(APIView):
 
 
 
-class GetChanelDataAPIView(APIView): 
+class GetChanelDataAPIView(ListAPIView):
      permission_classes = [IsAuthenticated]
+     serializer_class = GetChanelDataSerializers
 
-     def get(self, request):
-          chanel = get_object_or_404(Chanel, user=request.user)
-          if chanel:
-               serializer = ChanelSerializer(instance=chanel, context={'request': request})
-               data = {
-                    'status': True,
-                    'data': serializer.data
-               }
-               return Response(data=data)
-          else:
-               data = {
-                    'status': False,
-                    'message': "Sizda kanal mavjud emas"
-               }
-               return Response(data=data)
+     def get_queryset(self):
+          return self.request.user.chanel_subscribed.all()
+
+     def get_serializer_context(self):
+          return {
+               'request': self.request  # bu MUHIM!
+          }
+
+     def list(self, request, *args, **kwargs):
+          queryset = self.get_queryset()
+          serializer = self.get_serializer(queryset, many=True)
+          return Response({
+               'status': True,
+               'data': serializer.data
+          })
+
 
 
 

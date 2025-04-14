@@ -31,14 +31,13 @@ class ChanelSerializer(serializers.ModelSerializer):
 
 
 class GetChanelDataSerializers(serializers.ModelSerializer):
-     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+     username = serializers.SerializerMethodField()
      is_followed = serializers.SerializerMethodField()
      subscribers_count = serializers.SerializerMethodField()
 
      class Meta:
           model = Chanel
-          fields = ['id', 'user', 'name', 'icon', 'is_followed', 'subscribers_count']
-
+          fields = ['id', 'username', 'name', 'icon', 'is_followed', 'subscribers_count']
 
      def get_is_followed(self, obj):
           request = self.context.get('request')
@@ -46,7 +45,8 @@ class GetChanelDataSerializers(serializers.ModelSerializer):
                return obj.subscribers.filter(id=request.user.id).exists()
           return False
 
+     def get_subscribers_count(self, obj):
+          return obj.subscribers.count()
 
-     @staticmethod
-     def get_subscribers_count(obj):
-          return obj.subscribers.all().count()
+     def get_username(self, obj):
+          return obj.user.username
