@@ -8,15 +8,21 @@ class ContentSerializers(serializers.ModelSerializer):
      views = serializers.SerializerMethodField()
      chanel_name = serializers.SerializerMethodField()
      likes_count = serializers.SerializerMethodField()
+     comment_list = serializers.SerializerMethodField()
 
      class Meta:
           model = Content
           fields = ['id', 'title', 'description', 'photo', 'video', 'created_at', 
-                    'views', 'category', 'author', 'chanel_name', 'likes_count']
+                    'views', 'category', 'author', 'chanel_name', 'likes_count', 'comment_list']
 
      
      def get_views(self, obj):
           return obj.views.count()
+     
+
+     def get_comment_list(self, obj):
+          comments = obj.content_comments.all()
+          return CommentListToContentSerializers(instance=comments, many=True).data
 
      
      def get_chanel_name(self, obj):
@@ -25,26 +31,25 @@ class ContentSerializers(serializers.ModelSerializer):
 
      def get_likes_count(self, obj):
           user = self.context.get('request').user
+
           if user.is_authenticated:
-               like = Like.objects.filter(user=user, dislike=False)
-               dislike = Like.objects.filter(user=user, dislike=True)
+               like = Like.objects.filter(user=user, video=obj, dislike=False)
+               dislike = Like.objects.filter(user=user, video=obj, dislike=True)
+
                is_liked = like.exists()
                is_disliked = dislike.exists()
-               data = {
-                    'is_liked': is_liked,
-                    'is_disliked': is_disliked,
-                    'likes': obj.likes.filter(dislike=False).count(),
-                    'dislikes': obj.likes.filter(dislike=True).count(),
-               }
-               return data
-          
+          else:
+               is_liked = False
+               is_disliked = False
+
           data = {
-               is_liked: False,
-               is_disliked: False,
-               'likes': 0,
-               'dislikes': 0,
+               'is_liked': is_liked,
+               'is_disliked': is_disliked,
+               'likes': obj.content_likes.filter(dislike=False).count(),
+               'dislikes': obj.content_likes.filter(dislike=True).count(),
           }
           return data
+
 
 
 
@@ -116,30 +121,38 @@ class UpdateCommentReplyToContentSerializers(serializers.ModelSerializer):
 class CommentListToContentSerializers(serializers.ModelSerializer):
      likes_count = serializers.SerializerMethodField()
      comment_replys = serializers.SerializerMethodField()
+
      class Meta:
           model = Comment
-          fields = ['id', 'comment', 'user', 'likes_count', ]
-     
+          fields = ['id', 'comment', 'user', 'likes_count', 'comment_replys']
 
      def get_likes_count(self, obj):
-          user = self.context.get('request').user
-          like = CommentLike.objects.filter(user=user, comment=obj, dislike=False)
-          dislike = CommentLike.objects.filter(user=user, comment=obj, dislike=True)
-          is_liked = like.exists()
-          is_disliked = dislike.exists()
+          # Request kontekstdan olish va userni tekshirish
+          request = self.context.get('request')
+          if request and hasattr(request, 'user'):
+               user = request.user
+               like = CommentLike.objects.filter(user=user, comment=obj, dislike=False)
+               dislike = CommentLike.objects.filter(user=user, comment=obj, dislike=True)
+               is_liked = like.exists()
+               is_disliked = dislike.exists()
 
-          data = {
-               'is_liked': is_liked,
-               'is_disliked': is_disliked,
-               'comment_likes': obj.commen_likes.filter(dislike=False),
-               'comment_dislikes': obj.commen_likes.filter(dislike=True),
+               return {
+                    'is_liked': is_liked,
+                    'is_disliked': is_disliked,
+                    'comment_likes': obj.comment_likes.filter(dislike=False).count(),
+                    'comment_dislikes': obj.comment_likes.filter(dislike=True).count(),
+               }
+          return {
+               'is_liked': False,
+               'is_disliked': False,
+               'comment_likes': 0,
+               'comment_dislikes': 0,
           }
 
-          return data
-     
      def get_comment_replys(self, obj):
+          # Kommentariyalarga javoblarni olish
           comments = obj.comment_replys.all()
-          return CommentReplyToContentSerializers(instance=comments, many=True).data
+          return CommentListToContentSerializers(instance=comments, many=True, context=self.context).data
 
 
 

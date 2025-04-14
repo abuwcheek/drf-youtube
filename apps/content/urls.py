@@ -1,5 +1,8 @@
 from django.urls import path
-from .views import (CategoryCreateAPIView, CategoryListAPIView, CategoryRetrieveAPIView, CategoryUpdateAPIView, CreateContentAPIView, DestroyCategoryAPIView, OrderByLikeAPIView, OrderByTimeAPIView, OrderByViewsAPIView, SearchVideosAPIView, UpdateContentAPIView, 
+from .views import (CategoryCreateAPIView, CategoryListAPIView, CategoryRetrieveAPIView, 
+                    CategoryUpdateAPIView, CreateContentAPIView, DestroyCategoryAPIView, 
+                    OrderByLikeAPIView, OrderByTimeAPIView, OrderByViewsAPIView, 
+                    SearchVideosAPIView, UpdateContentAPIView, 
                     DeleteContentAPIView, RetrieveContentAPIView, 
                     ListContentAPIView, LikeToContentAPIView,
                     CommetToContentAPIView, UpdateCommentToContentAPIView,

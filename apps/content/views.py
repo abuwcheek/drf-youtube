@@ -10,7 +10,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from .models import  Category, CommentLike, CommentReply, Content, PlayList, View, Like, Comment
-from .serializers import ( CategoryListSerializers, CategoryRetrieveSerializers, ContentCommentListSerializers, ContentSerializers, CreatePlayListSerializers, 
+from .serializers import ( CategoryListSerializers, CategoryRetrieveSerializers, 
+                         ContentCommentListSerializers, ContentSerializers, CreatePlayListSerializers, 
                          UpdateCommentReplyToContentSerializers,UpdateContentSerializers, 
                          CommentToContenSerializers, UpdateCommentToContentSerializers, 
                          CommentReplyToContentSerializers, CommentListToContentSerializers, 
@@ -50,10 +51,11 @@ class UpdateContentAPIView(UpdateAPIView):
      queryset = Content.objects.filter(is_active=True)
 
      def update(self, request, *args, **kwargs):
-          super().update(request, *args, **kwargs)
+          database = super().update(request, *args, **kwargs)
           data = {
                'status': True,
-               'message': 'videoni o`zgartirdingiz'
+               'message': 'videoni o`zgartirdingiz',
+               'data': database.data
           }
           return Response(data=data)
 
@@ -82,13 +84,14 @@ class RetrieveContentAPIView(RetrieveAPIView):
      queryset = Content.objects.all()
 
      def retrieve(self, request, *args, **kwargs):
+          content = self.get_object()
           if request.user.is_authenticated:
-               content = self.get_object()
                user = request.user
-               view = View.objects.get_or_create(user=user, content=content)
+               View.objects.get_or_create(user=user, content=content)
 
-          return super().retrieve(request, *args, **kwargs)
-
+          # To‘g‘ri kontekstni serializatorga uzating
+          serializer = ContentSerializers(instance=content, context={'request': request})
+          return Response(serializer.data)
 
 
 class ListContentAPIView(ListAPIView):
