@@ -10,8 +10,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from .models import  Category, CommentLike, CommentReply, Content, PlayList, View, Like, Comment
-from .serializers import ( CategoryListSerializers, CategoryRetrieveSerializers, 
-                         ContentCommentListSerializers, ContentSerializers, CreatePlayListSerializers, 
+from .serializers import ( CategoryListSerializers, CategoryRetrieveSerializers, CommentLikeSerializer, 
+                         ContentCommentListSerializers, ContentListSerializers, ContentSerializers, CreatePlayListSerializers, SearchContentSerializers, 
                          UpdateCommentReplyToContentSerializers,UpdateContentSerializers, 
                          CommentToContenSerializers, UpdateCommentToContentSerializers, 
                          CommentReplyToContentSerializers, CommentListToContentSerializers, 
@@ -79,7 +79,7 @@ class DeleteContentAPIView(DestroyAPIView):
 
 
 class RetrieveContentAPIView(RetrieveAPIView):
-     permission_classes = [IsAuthenticated]
+     permission_classes = [AllowAny]
      serializer_class = ContentSerializers
      queryset = Content.objects.all()
 
@@ -96,7 +96,7 @@ class RetrieveContentAPIView(RetrieveAPIView):
 
 class ListContentAPIView(ListAPIView):
      permission_classes = [AllowAny]
-     serializer_class = ContentSerializers
+     serializer_class = ContentListSerializers
      queryset = Content.objects.filter(is_active=True)
      pagination_class = MyPageNumberPagination
 
@@ -219,11 +219,14 @@ class LikeCommentToContentAPIView(APIView):
                     }
           else:
                CommentLike.objects.create(comment=comment, user=request.user, dislike=dislike)
-               data = {
-                    'status': True,
-                    'message': "like bosildi"
-               }
+
+          serializer = CommentLikeSerializer(like)
           
+          data = {
+               'status': True,
+               'message': "like bosildi",
+               'data': serializer.data
+          }
           return Response(data=data)
 
 
@@ -484,34 +487,32 @@ class CategoryRetrieveAPIView(RetrieveAPIView):
 
 class SearchVideosAPIView(ListAPIView):
      permission_classes = [AllowAny]
-     serializer_class = ContentSerializers
+     serializer_class = SearchContentSerializers
 
      def get_queryset(self):
           search = self.kwargs.get('search')
-          return Content.objects.filter(Q(title__icontains=search) | Q(description__icontains=search) | Q(category__title__icontains=search) | Q(is_active=True))
+          return Content.objects.filter(Q(title__icontains=search) | Q(description__icontains=search) | Q(category__title__icontains=search)).filter(is_active=True)
 
 
 
 class OrderByTimeAPIView(ListAPIView):
      permission_classes = [AllowAny]
-     serializer_class = ContentSerializers
+     serializer_class = SearchContentSerializers
      queryset = Content.objects.filter(is_active=True).order_by('-created_at')
 
 
 
 class OrderByViewsAPIView(ListAPIView):
      permission_classes = [AllowAny]
-     serializer_class = ContentSerializers
-     queryset = Content.objects.filter(is_active=True).order_by('-views__count')
+     serializer_class = SearchContentSerializers
+     queryset = Content.objects.filter(is_active=True).annotate(view_count=Count('views')).order_by('-view_count')
 
 
 
 
 class OrderByLikeAPIView(ListAPIView):
      permission_classes = [AllowAny]
-     serializer_class = Content
+     serializer_class = SearchContentSerializers
 
      def get_queryset(self):
-          return Content.objects.annotate(
-               likes_count=Count('likes', filter=Q(likes__dislike=False))  # Faqat like larni hisoblash
-          ).order_by('-likes_count')
+          return Content.objects.filter(is_active=True).annotate(like_count=Count('content_likes')).order_by('-like_count')

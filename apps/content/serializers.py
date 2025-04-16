@@ -52,6 +52,25 @@ class ContentSerializers(serializers.ModelSerializer):
 
 
 
+class ContentListSerializers(serializers.ModelSerializer):
+     chanel_name = serializers.SerializerMethodField()
+     views = serializers.SerializerMethodField()
+
+     class Meta:
+          model = Content
+          fields = ['id', 'title', 'photo', 'video', 'category', 'author', 'chanel_name', 'views', 'created_at']
+
+
+
+     def get_views(self, obj):
+          return obj.views.count()
+
+
+     def get_chanel_name(self, obj):
+          return GetChanelDataSerializers(instance=obj.author, context={'request': self.context.get('request')}).data
+
+
+
 
 class UpdateContentSerializers(serializers.ModelSerializer):
      class Meta:
@@ -120,11 +139,11 @@ class UpdateCommentReplyToContentSerializers(serializers.ModelSerializer):
 
 class CommentListToContentSerializers(serializers.ModelSerializer):
      likes_count = serializers.SerializerMethodField()
-     comment_replys = serializers.SerializerMethodField()
+     comment_replies = serializers.SerializerMethodField()
 
      class Meta:
           model = Comment
-          fields = ['id', 'comment', 'user', 'likes_count', 'comment_replys']
+          fields = ['id', 'comment', 'user', 'likes_count', 'comment_replies']
 
      def get_likes_count(self, obj):
           # Request kontekstdan olish va userni tekshirish
@@ -149,11 +168,16 @@ class CommentListToContentSerializers(serializers.ModelSerializer):
                'comment_dislikes': 0,
           }
 
-     def get_comment_replys(self, obj):
-          # Kommentariyalarga javoblarni olish
-          comments = obj.comment_replys.all()
-          return CommentListToContentSerializers(instance=comments, many=True, context=self.context).data
+     def get_comment_replies(self, obj):
+          comments = obj.replies.all()
+          return CommentReplyToContentSerializers(instance=comments, many=True, context=self.context).data
 
+
+
+class CommentLikeSerializer(serializers.ModelSerializer):
+     class Meta:
+          model = CommentLike
+          fields = ['id', 'comment', 'user', 'dislike']
 
 
 class CreatePlayListSerializers(serializers.ModelSerializer):
@@ -244,3 +268,21 @@ class CategoryRetrieveSerializers(serializers.ModelSerializer):
      def get_contents(obj):
           contents = obj.category_videos.all().filter(is_active=True).order_by('-created_at')
           return ContentSerializers(instance=contents, many=True).data
+
+
+
+class SearchContentSerializers(serializers.ModelSerializer):
+     chanel_name = serializers.SerializerMethodField()
+     views = serializers.SerializerMethodField()
+
+     class Meta:
+          model = Content
+          fields = ['id', 'title', 'photo', 'video', 'category', 'author', 'chanel_name', 'views', 'created_at']
+
+
+     def get_views(self, obj):
+          return obj.views.count()
+
+
+     def get_chanel_name(self, obj):
+          return GetChanelDataSerializers(instance=obj.author, context={'request': self.context.get('request')}).data

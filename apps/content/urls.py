@@ -33,7 +33,7 @@ urlpatterns += [
      path('comment-to-content', CommetToContentAPIView.as_view()),
      path('update-comment-to-content/<int:pk>', UpdateCommentToContentAPIView.as_view()),
      path('delete-comment-to-content/<int:pk>', DeleteCommentToContentAPIView.as_view()),
-     path('comments-list/<int:content_id>', CommentListToContentAPIView.as_view()),
+     path('comments-list/<int:pk>', CommentListToContentAPIView.as_view()),
      
 ]
 

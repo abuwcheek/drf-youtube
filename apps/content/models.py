@@ -72,8 +72,8 @@ class CommentLike(BaseModel):
 
 
 class CommentReply(BaseModel):
-     user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, related_name='comment_replys', null=True, blank=True)
-     comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='comment_replys')
+     user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, related_name='replies', null=True, blank=True)
+     comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='replies')
      reply = models.TextField()
 
 
